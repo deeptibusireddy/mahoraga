@@ -1,0 +1,14 @@
+MAHORAGA — TodayScreen v3 (visual overhaul)
+=============================================
+Changes:
+- DS wave header: dark navy gradient (#020818) with "呪術訓練" kanji, app title, XP badge, grade bar
+- Day section: separate styled card with nav arrows, day title, progress pips + count label
+- Activity rows: locked text is now readable (white 25% opacity, not invisible dark blue)
+- Active row: crimson glow with "Go →" button
+- Quiz lock notice: readable teal text on subtle teal-tinted background
+- Scroll padding moved to container level (no more clipped edges)
+- Active day dot gets a scale transform (feels bigger)
+
+Apply:
+1. Copy src/screens/TodayScreen.js into c:\Source\biome\src\screens\
+2. npx eas build --profile preview --platform ios

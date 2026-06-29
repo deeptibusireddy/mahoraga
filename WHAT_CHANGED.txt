@@ -1,0 +1,18 @@
+v9 FIXES
+========
+1. TodayScreen: badge labels shortened so they don't wrap
+   ("TEACH BACK" not "REVERSE CURSED TECHNIQUE")
+2. TodayScreen: badge font size 11 (was 10), no uppercase stretch  
+3. TodayScreen: badge row uses flex-start (not space-between)
+4. TodayScreen: key font sizes bumped up across the screen
+5. HomeScreen: connector rotation fixed (transformOrigin removed, 
+   replaced with translateX trick that works in React Native)
+6. HomeScreen: ROW_HEIGHT increased 110->150 so active node 
+   doesn't overlap the next node
+7. HomeScreen: active node gets +100px extra space after it
+8. ParentScreen: "Reset Progress (Dev)" button added at bottom
+9. storage.js: resetAllProgress() function added
+
+HOW TO RESET BETWEEN BUILDS:
+- Go to HQ tab -> scroll to bottom -> tap "Reset Progress (Dev)"
+- Confirm -> restart the app

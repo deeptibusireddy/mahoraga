@@ -1,0 +1,29 @@
+MAHORAGA — Full Source Bundle
+==============================
+Includes ALL changes as of this session:
+
+Screens:
+- HomeScreen.js    — snaking path, absolute positioned nodes, diagonal connectors
+- TodayScreen.js   — big activity cards, active/done/locked states, font fixes
+- ParentScreen.js  — Reset Progress (Dev) button at bottom
+- MeScreen.js      — Sorcerer profile
+
+Components:
+- LessonImage.js   — Claude API visual explainer (3 punchy bullet points per lesson)
+
+Utils:
+- storage.js       — resetAllProgress(), updated reward menu
+- tts.js           — Telugu TTS
+
+Theme:
+- levels.js        — 9 levels, corrected JJK order (Semi-Grade 1 before Grade 1,
+                     Special Grade Candidate removed, Jujutsu Higher Ups,
+                     Divine General Mahoraga as final level)
+- colors.js        — DS color palette
+
+Data:
+- All 50 days of content
+- Telugu curriculum
+
+TO RESET BETWEEN BUILDS:
+  HQ tab → scroll to bottom → "Reset Progress (Dev)" → restart app
