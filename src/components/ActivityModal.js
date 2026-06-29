@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, TextInput, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform,
+  ScrollView, TextInput, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Linking, TouchableWithoutFeedback,
 } from 'react-native';
 import { speakTelugu } from '../utils/tts';
 import { XP_VALUES } from '../theme/levels';
@@ -36,18 +36,20 @@ const wc = t => t.trim().split(/\s+/).filter(Boolean).length;
 // ─── Shared full-screen card shell ────────────────────────────────────────────
 function Card({ accent, topLabel, children, btn, btnDisabled, onBtn, bottomNote }) {
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <View style={[s.card, { borderTopColor: accent, borderTopWidth: 4 }]}>
       {topLabel && <Text style={[s.topLabel, { color: accent }]}>{topLabel}</Text>}
       <View style={s.body}>{children}</View>
       {bottomNote && <Text style={s.bottomNote}>{bottomNote}</Text>}
       <TouchableOpacity
         style={[s.btn, { backgroundColor: accent }, btnDisabled && s.btnOff]}
-        onPress={btnDisabled ? undefined : onBtn}
+        onPress={btnDisabled ? undefined : () => { Keyboard.dismiss(); if (onBtn) onBtn(); }}
         activeOpacity={btnDisabled ? 1 : 0.8}
       >
         <Text style={s.btnText}>{btn}</Text>
       </TouchableOpacity>
     </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -180,10 +182,15 @@ export function DomainExpansion({ activity, dayId, onComplete, onFlag, saveRespo
   const ACCENT = '#E63946';
   const questions = activity.partB?.questions || [];
   const words = wc(writing);
-  const { remaining, ready: timerReady } = useCountdown(15, step === 0);
+  const [linkOpened, setLinkOpened] = useState(false);
+  const { remaining, ready: timerReady } = useCountdown(15, step === 0 && !linkOpened);
 
   const handleComplete = async () => {
     await saveResponse(dayId, { q1, q2, writing });
+    // Text responses to Amma
+    const msg = `Mahoraga Day ${dayId} - Domain Expansion:\nQ1: ${q1}\nQ2: ${q2}\nWriting: ${writing}`;
+    const encoded = encodeURIComponent(msg);
+    Linking.openURL(`sms:5127503474&body=${encoded}`).catch(() => {});
     onComplete();
   };
 
@@ -206,8 +213,8 @@ export function DomainExpansion({ activity, dayId, onComplete, onFlag, saveRespo
         <Card
           accent={ACCENT}
           topLabel="🔭 DOMAIN EXPANSION"
-          btn={timerReady ? 'Start Mission →' : `Read... ${remaining}s`}
-          btnDisabled={!timerReady}
+          btn={(timerReady || linkOpened) ? 'Start Mission →' : `Read... ${remaining}s`}
+          btnDisabled={!timerReady && !linkOpened}
           onBtn={() => setStep(1)}
         >
           <Text style={s.actTitle}>{activity.title || 'Go Explore'}</Text>
@@ -216,7 +223,9 @@ export function DomainExpansion({ activity, dayId, onComplete, onFlag, saveRespo
               <View style={[s.promptCard, { borderLeftColor: ACCENT }]}>
                 <RichText text={activity.partA.instruction} style={s.promptText} />
                 {activity.partA.url && (
-                  <Text style={[s.urlText, { color: ACCENT }]}>🔗 {activity.partA.url}</Text>
+                  <TouchableOpacity onPress={() => { Linking.openURL(activity.partA.url); setLinkOpened(true); }}>
+                    <Text style={[s.urlText, { color: ACCENT, textDecorationLine: 'underline' }]}>🔗 Tap to open link</Text>
+                  </TouchableOpacity>
                 )}
               </View>
             )}
@@ -231,7 +240,7 @@ export function DomainExpansion({ activity, dayId, onComplete, onFlag, saveRespo
           topLabel={`QUESTION 1 OF ${questions.length}`}
           btn={q1.trim().length > 5 ? 'Next →' : 'Write your answer first'}
           btnDisabled={q1.trim().length <= 5}
-          onBtn={() => setStep(questions[1] ? 2 : steps.indexOf('Write'))}
+          onBtn={() => { Keyboard.dismiss(); setStep(questions[1] ? 2 : steps.indexOf('Write')); }}
         >
           <Text style={s.bigQuestion}>{questions[0]}</Text>
           <TextInput
@@ -253,7 +262,7 @@ export function DomainExpansion({ activity, dayId, onComplete, onFlag, saveRespo
           topLabel={`QUESTION 2 OF ${questions.length}`}
           btn={q2.trim().length > 5 ? 'Next →' : 'Write your answer first'}
           btnDisabled={q2.trim().length <= 5}
-          onBtn={() => setStep(steps.indexOf('Write'))}
+          onBtn={() => { Keyboard.dismiss(); setStep(steps.indexOf('Write')); }}
         >
           <Text style={s.bigQuestion}>{questions[1]}</Text>
           <TextInput
@@ -275,7 +284,7 @@ export function DomainExpansion({ activity, dayId, onComplete, onFlag, saveRespo
           topLabel="✍️ WRITE-UP"
           btn={words >= 50 ? 'Submit →' : `${words} / 50 words`}
           btnDisabled={words < 50}
-          onBtn={() => setStep(steps.indexOf('Done'))}
+          onBtn={() => { Keyboard.dismiss(); setStep(steps.indexOf('Done')); }}
           bottomNote={words < 50 ? 'Write at least 50 words' : undefined}
         >
           <Text style={s.inputPrompt}>{activity.writingPrompt}</Text>
@@ -327,6 +336,10 @@ export function TeachItBack({ activity, dayId, onComplete, onFlag, saveResponse 
 
   const handleComplete = async () => {
     await saveResponse(dayId, response);
+    // Text response to Amma
+    const msg = `Mahoraga Day ${dayId} - Teach It Back:\n${response}`;
+    const encoded = encodeURIComponent(msg);
+    Linking.openURL(`sms:5127503474&body=${encoded}`).catch(() => {});
     onComplete();
   };
 
@@ -360,7 +373,7 @@ export function TeachItBack({ activity, dayId, onComplete, onFlag, saveResponse 
           topLabel="✍️ TEACH IT"
           btn={ready ? 'Done →' : `${words} / 30 words`}
           btnDisabled={!ready}
-          onBtn={() => setStep(2)}
+          onBtn={() => { Keyboard.dismiss(); setStep(2); }}
           bottomNote={!ready ? 'Write at least 30 words' : undefined}
         >
           <Text style={s.inputPrompt}>{activity.followUp}</Text>
@@ -461,7 +474,7 @@ export function Challenge({ activity, onComplete, onFlag }) {
           accent={ACCENT}
           topLabel="✅ ANSWER"
           btn="Got it! →"
-          onBtn={() => setStep(2)}
+          onBtn={() => { Keyboard.dismiss(); setStep(2); }}
         >
           <View style={[s.answerCard, { borderColor: ACCENT + '60', backgroundColor: ACCENT + '10' }]}>
             <Text style={[s.answerLabel, { color: ACCENT }]}>ANSWER</Text>
@@ -575,7 +588,7 @@ export function Telugu({ activity, onComplete }) {
           topLabel="🧠 RECALL QUIZ"
           btn={allRecalled ? 'Next →' : 'Answer all questions'}
           btnDisabled={!allRecalled}
-          onBtn={() => setStep(2)}
+          onBtn={() => { Keyboard.dismiss(); setStep(2); }}
         >
           <ScrollView showsVerticalScrollIndicator={false}>
             {recallQuiz.length === 0 ? (

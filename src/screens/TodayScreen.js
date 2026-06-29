@@ -126,8 +126,14 @@ function ActivityCard({ actKey, activity, completed, isActive, isLocked, onPress
   }
 
   if (completed) {
+    const isLesson = actKey === 'lesson1' || actKey === 'lesson2' || actKey === 'lesson3';
+    const CardWrapper = isLesson ? TouchableOpacity : View;
     return (
-      <View style={[g.cardDone, { borderLeftColor: accent }]}>
+      <CardWrapper
+        style={[g.cardDone, { borderLeftColor: accent }]}
+        onPress={isLesson ? onPress : undefined}
+        activeOpacity={0.7}
+      >
         <View style={[g.cardDoneIcon, { backgroundColor: accentBg }]}>
           <Text style={{ fontSize: 26 }}>{ACTIVITY_EMOJIS[actKey] || '✅'}</Text>
         </View>
@@ -141,11 +147,14 @@ function ActivityCard({ actKey, activity, completed, isActive, isLocked, onPress
           <Text style={g.cardDoneTitle} numberOfLines={1}>
             {activity?.title || activity?.concept || JJK_NAMES[actKey]}
           </Text>
+                  </View>
+        <View style={{ alignItems: 'center', gap: 6 }}>
+          <View style={[g.cardDoneCheck, { backgroundColor: accent }]}>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '900' }}>✓</Text>
+          </View>
+          {isLesson && <View style={{ paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, backgroundColor: accent, shadowColor: accent, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.8, shadowRadius: 4, elevation: 4 }}><Text style={{ color: '#fff', fontSize: 8, fontWeight: '900', letterSpacing: 0.5 }}>REVIEW</Text></View>}
         </View>
-        <View style={[g.cardDoneCheck, { backgroundColor: accent }]}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '900' }}>✓</Text>
-        </View>
-      </View>
+      </CardWrapper>
     );
   }
 
@@ -663,6 +672,7 @@ export default function TodayScreen({ route }) {
   const [ca, setCa] = useState({});
   const [doneIds, setDoneIds] = useState([]);
   const [activeAct, setActiveAct] = useState(null);
+  const [reviewMode, setReviewMode] = useState(false);
   const [activeKey, setActiveKey] = useState(null);
   const [xp, setXp] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -735,7 +745,7 @@ export default function TodayScreen({ route }) {
     if (!activeAct || !activeKey) return null;
     const c = (extra) => complete(activeKey, extra);
     if (activeKey === 'lesson1' || activeKey === 'lesson2' || activeKey === 'lesson3')
-      return <InteractiveLesson actKey={activeKey} activity={activeAct} onComplete={c} onFlag={flag} />;
+      return <InteractiveLesson actKey={activeKey} activity={activeAct} onComplete={c} onFlag={flag} reviewMode={reviewMode} />;
     if (activeKey === 'quiz') return <QuizModal activity={activeAct} onComplete={c} />;
     if (activeKey === 'brainTeaser') return <BrainTeaser activity={activeAct} onComplete={c} onFlag={flag} />;
     if (activeKey === 'goExplore') return <DomainExpansion activity={activeAct} dayId={day.id} onComplete={c} onFlag={flag} saveResponse={saveGoExploreResponse} />;
@@ -831,9 +841,9 @@ export default function TodayScreen({ route }) {
                 actKey={key}
                 activity={acts[key]}
                 completed={isDone}
-                isActive={!isDone && !isLocked && (isFree || idx === doneCount)}
+                isActive={!isDone && !isLocked && (isFree || (key === 'quiz' && quizUnlocked(ca, day.id)) || (!isFree && key !== 'quiz' && idx === doneCount))}
                 isLocked={isLocked}
-                onPress={() => open(key)}
+                onPress={() => open(key, isDone && (key === 'lesson1' || key === 'lesson2' || key === 'lesson3'))}
               />
             );
           })}
@@ -852,7 +862,7 @@ export default function TodayScreen({ route }) {
 
       <Modal visible={!!activeAct} animationType="slide" presentationStyle="fullScreen">
         <SafeAreaView style={g.modalShell}>
-          <TouchableOpacity style={g.modalClose} onPress={() => { setActiveAct(null); setActiveKey(null); }}>
+          <TouchableOpacity style={g.modalClose} onPress={() => { setActiveAct(null); setActiveKey(null); setReviewMode(false); }}>
             <Text style={g.modalCloseText}>✕ Close</Text>
           </TouchableOpacity>
           {renderModal()}
@@ -938,6 +948,7 @@ const g = StyleSheet.create({
   cardDoneLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 3 },
   cardDoneTitle: { fontSize: 16, color: 'rgba(255,255,255,0.7)', fontWeight: '600' },
   cardDoneCheck: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  cardReviewLabel: { fontSize: 13, fontWeight: '800', marginTop: 4 },
 
   // LOCKED card
   cardLocked: {

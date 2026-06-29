@@ -60,8 +60,8 @@ function FullCard({ accent, topLabel, children, buttonLabel, onPress, buttonDisa
 }
 
 // ─── Visual point card ────────────────────────────────────────────────────────
-function VisualPointCard({ point, accent, pointNum, totalPoints, onNext, isLast }) {
-  const { remaining, ready } = useCountdown(7, true);
+function VisualPointCard({ point, accent, pointNum, totalPoints, onNext, isLast, reviewMode = false }) {
+  const { remaining, ready } = useCountdown(reviewMode ? 0 : 7, true);
   return (
     <FullCard
       accent={accent}
@@ -99,14 +99,17 @@ function useDotsAnimation() {
 }
 
 // ─── Learn content card ───────────────────────────────────────────────────────
-function LearnCard({ text, cardNum, totalCards, accent, onNext, onBack, isLast }) {
-  const { remaining, ready } = useCountdown(10, true);
+function LearnCard({ text, cardNum, totalCards, accent, onNext, onBack, isLast, reviewMode = false, onComplete }) {
+  const { remaining, ready } = useCountdown(reviewMode ? 0 : 10, true);
+  const handleNext = () => {
+    if (reviewMode && isLast) { onComplete && onComplete(); } else { onNext(); }
+  };
   return (
     <FullCard
       accent={accent}
       topLabel={`Read · ${cardNum} of ${totalCards}`}
-      buttonLabel={ready ? (isLast ? 'Practice →' : 'Next →') : `${remaining}s`}
-      onPress={onNext}
+      buttonLabel={ready ? (isLast && reviewMode ? 'Done ✓' : isLast ? 'Practice →' : 'Next →') : `${remaining}s`}
+      onPress={handleNext}
       buttonDisabled={!ready}
     >
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -233,9 +236,27 @@ function PracticeScreen({ activity, accent, onNext }) {
 }
 
 // ─── Complete screen ──────────────────────────────────────────────────────────
-function CompleteScreen({ activity, actKey, score, totalQ, accent, onComplete }) {
+function CompleteScreen({ activity, actKey, score, totalQ, accent, onComplete, reviewMode = false }) {
   const pct = totalQ > 0 ? Math.round((score / totalQ) * 100) : 100;
-  const isPerfect = totalQ > 0 && score === totalQ;
+  const isPerfect = !reviewMode && totalQ > 0 && score === totalQ;
+  if (reviewMode) {
+    return (
+      <View style={[s.fullCard, { borderTopColor: accent, borderTopWidth: 4, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={s.completeMedal}>📖</Text>
+        <Text style={s.completeTitle}>Review Complete</Text>
+        <Text style={[s.completeMsg, { color: accent }]}>Good refresher! XP already earned on first completion.</Text>
+        {activity.keyFact && (
+          <View style={[s.keyFactBox, { borderColor: accent + '50', backgroundColor: accent + '10' }]}>
+            <Text style={[s.keyFactLabel, { color: accent }]}>⚡ REMEMBER THIS</Text>
+            <Text style={s.keyFactText}>{activity.keyFact}</Text>
+          </View>
+        )}
+        <TouchableOpacity style={[s.bigBtn, { backgroundColor: accent, width: '100%' }]} onPress={onComplete}>
+          <Text style={s.bigBtnText}>Done ✓</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
   const medal = isPerfect ? '🏆' : pct >= 66 ? '⭐' : '💪';
   const msg = isPerfect ? 'Perfect score! Cursed technique mastered!'
     : pct >= 66 ? 'Great work! Keep training, sorcerer.'
@@ -286,7 +307,7 @@ function CompleteScreen({ activity, actKey, score, totalQ, accent, onComplete })
 }
 
 // ─── Main InteractiveLesson ───────────────────────────────────────────────────
-export default function InteractiveLesson({ actKey, activity, onComplete, onFlag }) {
+export default function InteractiveLesson({ actKey, activity, onComplete, onFlag, reviewMode = false }) {
   const subj = activity.subject || 'math';
   const accent = SUBJECT_COLOR[subj] || '#00B4D8';
 
@@ -332,7 +353,7 @@ export default function InteractiveLesson({ actKey, activity, onComplete, onFlag
   const screen = getScreenType(screenIdx);
 
   // Step indicator counts
-  const stepLabels = ['Overview', 'Learn', 'Practice', 'Done'];
+  const stepLabels = reviewMode ? ['Overview', 'Learn'] : ['Overview', 'Learn', 'Practice', 'Done'];
   const currentStep = screenIdx < totalPoints ? 0
     : screenIdx < totalPoints + totalLearn ? 1
     : screenIdx === totalPoints + totalLearn && hasPractice ? 2
@@ -342,6 +363,11 @@ export default function InteractiveLesson({ actKey, activity, onComplete, onFlag
     <View style={s.container}>
       {/* Header: step pills + flag */}
       <View style={s.header}>
+        {reviewMode && (
+          <View style={{ backgroundColor: 'rgba(255,215,0,0.1)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)', marginRight: 8 }}>
+            <Text style={{ color: '#FFD700', fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>📖 REVIEW</Text>
+          </View>
+        )}
         <View style={s.stepRow}>
           {stepLabels.map((label, i) => (
             <View key={i} style={[
@@ -373,6 +399,7 @@ export default function InteractiveLesson({ actKey, activity, onComplete, onFlag
           totalPoints={totalPoints}
           isLast={screen.pointIdx === totalPoints - 1}
           onNext={goNext}
+          reviewMode={reviewMode}
         />
       ) : screen.type === 'learn' ? (
         <LearnCard
@@ -386,6 +413,8 @@ export default function InteractiveLesson({ actKey, activity, onComplete, onFlag
           isLast={screen.cardIdx === totalLearn - 1}
           onNext={goNext}
           onBack={screenIdx > 0 ? goBack : null}
+          reviewMode={reviewMode}
+          onComplete={onComplete}
         />
       ) : screen.type === 'practice' ? (
         <PracticeScreen
@@ -398,9 +427,10 @@ export default function InteractiveLesson({ actKey, activity, onComplete, onFlag
           activity={activity}
           actKey={actKey}
           score={practiceScore}
-          totalQ={(activity.practice || []).length}
+          totalQ={reviewMode ? 0 : (activity.practice || []).length}
           accent={accent}
           onComplete={onComplete}
+          reviewMode={reviewMode}
         />
       )}
     </View>
