@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { syncFromCloud } from './src/utils/storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, StyleSheet } from 'react-native';
@@ -20,6 +21,13 @@ function TabIcon({ emoji, label, focused }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    // Pull latest progress from cloud on launch
+    syncFromCloud().then(synced => {
+      if (synced) console.log('Progress synced from cloud');
+    });
+  }, []);
+
   return (
     <NavigationContainer>
       <Tab.Navigator

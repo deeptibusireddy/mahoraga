@@ -29,7 +29,7 @@ export const XP_VALUES = {
   lesson3:      10,  // Cursed Technique III
   quiz:         15,  // Binding Vow
   brainTeaser:  10,  // Brain Teaser
-  goExplore:    20,  // Domain Expansion
+  goExplore:      15,  // Domain Expansion
   teachItBack:  20,  // Reverse Cursed Technique
   challenge:    15,  // Special Grade Mission
   telugu:       10,  // Telugu Incantation
@@ -82,3 +82,4 @@ export const getNextLevel = (xp) => {
   }
   return null;
 };
+

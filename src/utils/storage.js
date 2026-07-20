@@ -1,3 +1,4 @@
+import { pushProgress, pullProgress } from './supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KEYS = {
@@ -17,6 +18,58 @@ const KEYS = {
 };
 
 // ─── XP ───────────────────────────────────────────────────────────────────────
+// Sync all local data to Supabase
+async function syncToCloud() {
+  try {
+    const [xp, ca, completedDays, subjectDays, tokens, requests, flags, teluguCount] = await Promise.all([
+      AsyncStorage.getItem('mah_xp'),
+      AsyncStorage.getItem('mah_completed_activities'),
+      AsyncStorage.getItem('mah_completed_days'),
+      AsyncStorage.getItem('mah_subject_days'),
+      AsyncStorage.getItem('mah_reward_tokens'),
+      AsyncStorage.getItem('mah_reward_requests'),
+      AsyncStorage.getItem('mah_flags'),
+      AsyncStorage.getItem('mah_telugu_count'),
+    ]);
+    await pushProgress({
+      xp: xp ? parseInt(xp) : 0,
+      completed_activities: ca ? JSON.parse(ca) : {},
+      completed_days: completedDays ? JSON.parse(completedDays) : [],
+      subject_days: subjectDays ? JSON.parse(subjectDays) : {},
+      reward_tokens: tokens ? parseInt(tokens) : 0,
+      reward_requests: requests ? JSON.parse(requests) : [],
+      flags: flags ? JSON.parse(flags) : [],
+      telugu_count: teluguCount ? parseInt(teluguCount) : 0,
+    });
+  } catch (e) {
+    // Sync failure is silent — local data is still safe
+    console.log('Sync skipped:', e.message);
+  }
+}
+
+// Pull from Supabase and restore to local AsyncStorage
+export async function syncFromCloud() {
+  try {
+    const data = await pullProgress();
+    if (!data) return false;
+    await Promise.all([
+      AsyncStorage.setItem('mah_xp', String(data.xp || 0)),
+      AsyncStorage.setItem('mah_completed_activities', JSON.stringify(data.completed_activities || {})),
+      AsyncStorage.setItem('mah_completed_days', JSON.stringify(data.completed_days || [])),
+      AsyncStorage.setItem('mah_subject_days', JSON.stringify(data.subject_days || {})),
+      AsyncStorage.setItem('mah_reward_tokens', String(data.reward_tokens || 0)),
+      AsyncStorage.setItem('mah_reward_requests', JSON.stringify(data.reward_requests || [])),
+      AsyncStorage.setItem('mah_flags', JSON.stringify(data.flags || [])),
+      AsyncStorage.setItem('mah_telugu_count', String(data.telugu_count || 0)),
+    ]);
+    return true;
+  } catch (e) {
+    console.error('syncFromCloud error:', e);
+    return false;
+  }
+}
+
+
 export async function getXP() {
   try { return parseInt((await AsyncStorage.getItem(KEYS.XP)) || '0', 10); }
   catch { return 0; }

@@ -187,11 +187,14 @@ export function DomainExpansion({ activity, dayId, onComplete, onFlag, saveRespo
 
   const handleComplete = async () => {
     await saveResponse(dayId, { q1, q2, writing });
-    // Text responses to Amma
-    const msg = `Mahoraga Day ${dayId} - Domain Expansion:\nQ1: ${q1}\nQ2: ${q2}\nWriting: ${writing}`;
-    const encoded = encodeURIComponent(msg);
-    Linking.openURL(`sms:5127503474&body=${encoded}`).catch(() => {});
-    onComplete();
+    // Text responses to Amma (only if he wrote something)
+    if (q1.trim() || q2.trim() || writing.trim()) {
+      const msg = `Mahoraga Day ${dayId} - Domain Expansion:\nQ1: ${q1}\nQ2: ${q2}${writing ? '\nWriting: ' + writing : ''}`;
+      const encoded = encodeURIComponent(msg);
+      Linking.openURL(`sms:5127503474&body=${encoded}`).catch(() => {});
+    }
+    // Pass bonus flag if writing completed
+    onComplete(writing.trim().split(/\s+/).filter(Boolean).length >= 50 ? 'writing_bonus' : false);
   };
 
   // Build step list dynamically
@@ -281,25 +284,27 @@ export function DomainExpansion({ activity, dayId, onComplete, onFlag, saveRespo
       {step === steps.indexOf('Write') && (
         <Card
           accent={ACCENT}
-          topLabel="✍️ WRITE-UP"
-          btn={words >= 50 ? 'Submit →' : `${words} / 50 words`}
-          btnDisabled={words < 50}
+          topLabel="✍️ WRITE-UP (OPTIONAL +15 XP)"
+          btn={words >= 50 ? 'Submit +15 bonus XP →' : 'Skip for now →'}
+          btnDisabled={false}
           onBtn={() => { Keyboard.dismiss(); setStep(steps.indexOf('Done')); }}
-          bottomNote={words < 50 ? 'Write at least 50 words' : undefined}
+          bottomNote={words > 0 && words < 50 ? `${50 - words} more words for bonus XP` : undefined}
         >
           <Text style={s.inputPrompt}>{activity.writingPrompt}</Text>
           <TextInput
             style={[s.bigInput, { minHeight: 160 }]}
             value={writing}
             onChangeText={setWriting}
-            placeholder="Write at least 50 words..."
+            placeholder="Optional — write 50+ words for +10 bonus XP..."
             placeholderTextColor="rgba(255,255,255,0.25)"
             multiline
             autoFocus
           />
-          <Text style={[s.wcText, words >= 50 && { color: ACCENT }]}>
-            {words} / 50 words {words >= 50 ? '✓' : ''}
-          </Text>
+          {words > 0 && (
+            <Text style={[s.wcText, words >= 50 && { color: ACCENT }]}>
+              {words} / 50 words {words >= 50 ? '✓ +15 XP unlocked!' : ''}
+            </Text>
+          )}
         </Card>
       )}
 

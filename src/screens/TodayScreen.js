@@ -708,6 +708,8 @@ export default function TodayScreen({ route }) {
     let amt = XP_VALUES[key] || 10;
     // Lesson perfect score bonus: +1 XP if all practice questions correct
     if ((key === 'lesson1' || key === 'lesson2' || key === 'lesson3') && extra === true) amt += 1;
+    // Domain Expansion writing bonus: +10 if 50+ word write-up completed
+    if (key === 'goExplore' && extra === 'writing_bonus') amt += 15;
 
     // Quiz bonus: extra is the score fraction e.g. {score: 11, total: 12}
     let quizBonus = 0;
