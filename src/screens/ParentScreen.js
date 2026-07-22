@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { getLevelForXP } from '../theme/levels';
-import { getAllStats, getGoExploreResponses, getTeachResponses, getRewardRequests, approveRewardRequest, resolveFlag, resetAllProgress } from '../utils/storage';
+import { getAllStats, getGoExploreResponses, getTeachResponses, getRewardRequests, approveRewardRequest, resolveFlag, resetAllProgress, markActivityComplete, markDayComplete, addXP } from '../utils/storage';
 import { allDays } from '../data/allDays';
 
 const PARENT_PIN = process.env.EXPO_PUBLIC_PARENT_PIN || '1234';
@@ -239,6 +239,31 @@ export default function ParentScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* ONE-TIME: Mark Day 1 complete for Abhi */}
+      <TouchableOpacity
+        style={{ margin: 16, marginBottom: 0, padding: 14, backgroundColor: '#071828', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(0,180,216,0.3)', alignItems: 'center' }}
+        onPress={() => {
+          Alert.alert(
+            '✅ Mark Day 1 Complete',
+            'Marks all Day 1 activities as done and awards XP. Use once for Abhi.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Mark Complete', onPress: async () => {
+                const day1Activities = ['lesson1', 'lesson2', 'lesson3', 'quiz', 'brainTeaser', 'goExplore', 'teachItBack', 'challenge', 'telugu'];
+                for (const act of day1Activities) {
+                  await markActivityComplete(1, act);
+                }
+                await markDayComplete(1, 'mixed');
+                await addXP(120); // approximate day 1 XP
+                Alert.alert('✓ Done', 'Day 1 marked complete! Restart the app.');
+              }},
+            ]
+          );
+        }}
+      >
+        <Text style={{ color: '#00B4D8', fontWeight: '700', fontSize: 14 }}>✅ Mark Day 1 Complete (One-time)</Text>
+      </TouchableOpacity>
 
       {/* DEV: Reset progress between test builds */}
       <TouchableOpacity

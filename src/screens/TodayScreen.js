@@ -741,7 +741,7 @@ export default function TodayScreen({ route }) {
     Alert.alert('Flagged! 🚩', 'Saved to your ask-later list in Sorcerer HQ.');
   };
 
-  const open = (key) => { setActiveKey(key); setActiveAct(acts[key]); };
+  const open = (key, review = false) => { setActiveKey(key); setActiveAct(acts[key]); setReviewMode(review); };
 
   const renderModal = () => {
     if (!activeAct || !activeKey) return null;
