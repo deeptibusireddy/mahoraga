@@ -307,7 +307,7 @@ function CompleteScreen({ activity, actKey, score, totalQ, accent, onComplete, r
 }
 
 // ─── Main InteractiveLesson ───────────────────────────────────────────────────
-export default function InteractiveLesson({ actKey, activity, onComplete, onFlag, reviewMode = false }) {
+export default function InteractiveLesson({ actKey, activity, onComplete, onFlag, reviewMode = false, dayId = 1 }) {
   const subj = activity.subject || 'math';
   const accent = SUBJECT_COLOR[subj] || '#00B4D8';
 
@@ -330,7 +330,7 @@ export default function InteractiveLesson({ actKey, activity, onComplete, onFlag
     return cards;
   })();
 
-  const totalPoints = 3; // always 3 visual points
+  const totalPoints = (dayId === 1 && !reviewMode) ? 3 : 0; // only show visual points on Day 1
   const totalLearn = learnCards.length;
   const hasPractice = (activity.practice || []).length > 0;
 
@@ -353,7 +353,7 @@ export default function InteractiveLesson({ actKey, activity, onComplete, onFlag
   const screen = getScreenType(screenIdx);
 
   // Step indicator counts
-  const stepLabels = reviewMode ? ['Overview', 'Learn'] : ['Overview', 'Learn', 'Practice', 'Done'];
+  const stepLabels = reviewMode ? ['Learn'] : (totalPoints > 0 ? ['Overview', 'Learn', 'Practice', 'Done'] : ['Learn', 'Practice', 'Done']);
   const currentStep = screenIdx < totalPoints ? 0
     : screenIdx < totalPoints + totalLearn ? 1
     : screenIdx === totalPoints + totalLearn && hasPractice ? 2

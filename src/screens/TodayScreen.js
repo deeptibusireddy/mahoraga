@@ -747,7 +747,7 @@ export default function TodayScreen({ route }) {
     if (!activeAct || !activeKey) return null;
     const c = (extra) => complete(activeKey, extra);
     if (activeKey === 'lesson1' || activeKey === 'lesson2' || activeKey === 'lesson3')
-      return <InteractiveLesson actKey={activeKey} activity={activeAct} onComplete={c} onFlag={flag} reviewMode={reviewMode} />;
+      return <InteractiveLesson actKey={activeKey} activity={activeAct} onComplete={c} onFlag={flag} reviewMode={reviewMode} dayId={day?.id} />;
     if (activeKey === 'quiz') return <QuizModal activity={activeAct} onComplete={c} />;
     if (activeKey === 'brainTeaser') return <BrainTeaser activity={activeAct} onComplete={c} onFlag={flag} />;
     if (activeKey === 'goExplore') return <DomainExpansion activity={activeAct} dayId={day.id} onComplete={c} onFlag={flag} saveResponse={saveGoExploreResponse} />;
@@ -843,7 +843,7 @@ export default function TodayScreen({ route }) {
                 actKey={key}
                 activity={acts[key]}
                 completed={isDone}
-                isActive={!isDone && !isLocked && (isFree || (key === 'quiz' && quizUnlocked(ca, day.id)) || (!isFree && key !== 'quiz' && idx === doneCount))}
+                isActive={!isDone && !isLocked && (isFree || (key === 'quiz' && quizUnlocked(ca, day.id)) || ((key === 'teachItBack' || key === 'challenge') && quizDone) || (key === 'lesson1' && !ca[`${day.id}_lesson1`]) || (key === 'lesson2' && !!ca[`${day.id}_lesson1`] && !ca[`${day.id}_lesson2`]) || (key === 'lesson3' && !!ca[`${day.id}_lesson2`] && !ca[`${day.id}_lesson3`]))}
                 isLocked={isLocked}
                 onPress={() => open(key, isDone && (key === 'lesson1' || key === 'lesson2' || key === 'lesson3'))}
               />

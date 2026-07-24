@@ -240,30 +240,33 @@ export default function ParentScreen() {
         )}
       </ScrollView>
 
-      {/* ONE-TIME: Mark Day 1 complete for Abhi */}
-      <TouchableOpacity
-        style={{ margin: 16, marginBottom: 0, padding: 14, backgroundColor: '#071828', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(0,180,216,0.3)', alignItems: 'center' }}
-        onPress={() => {
-          Alert.alert(
-            '✅ Mark Day 1 Complete',
-            'Marks all Day 1 activities as done and awards XP. Use once for Abhi.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Mark Complete', onPress: async () => {
-                const day1Activities = ['lesson1', 'lesson2', 'lesson3', 'quiz', 'brainTeaser', 'goExplore', 'teachItBack', 'challenge', 'telugu'];
-                for (const act of day1Activities) {
-                  await markActivityComplete(1, act);
-                }
-                await markDayComplete(1, 'mixed');
-                await addXP(120); // approximate day 1 XP
-                Alert.alert('✓ Done', 'Day 1 marked complete! Restart the app.');
-              }},
-            ]
-          );
-        }}
-      >
-        <Text style={{ color: '#00B4D8', fontWeight: '700', fontSize: 14 }}>✅ Mark Day 1 Complete (One-time)</Text>
-      </TouchableOpacity>
+      {/* Mark days complete for Abhi */}
+      {[2, 3].map(dayNum => (
+        <TouchableOpacity
+          key={dayNum}
+          style={{ margin: 16, marginBottom: 0, padding: 14, backgroundColor: '#071828', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(0,180,216,0.3)', alignItems: 'center' }}
+          onPress={() => {
+            Alert.alert(
+              `✅ Mark Day ${dayNum} Complete`,
+              `Marks all Day ${dayNum} activities as done and awards XP.`,
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Mark Complete', onPress: async () => {
+                  const activities = ['lesson1', 'lesson2', 'lesson3', 'quiz', 'brainTeaser', 'goExplore', 'teachItBack', 'challenge', 'telugu'];
+                  for (const act of activities) {
+                    await markActivityComplete(dayNum, act);
+                  }
+                  await markDayComplete(dayNum, 'mixed');
+                  await addXP(120);
+                  Alert.alert('✓ Done', `Day ${dayNum} marked complete! Restart the app.`);
+                }},
+              ]
+            );
+          }}
+        >
+          <Text style={{ color: '#00B4D8', fontWeight: '700', fontSize: 14 }}>✅ Mark Day {dayNum} Complete (One-time)</Text>
+        </TouchableOpacity>
+      ))}
 
       {/* DEV: Reset progress between test builds */}
       <TouchableOpacity
